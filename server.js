@@ -12,6 +12,9 @@ const PORT = 700;
 const customerRoute = require("./routes/customer.route");
 app.use("/customer", customerRoute);
 
+const typeRoute = require("./routes/room_type.route");
+app.use("/roomType", typeRoute);
+
 app.listen(PORT, () => {
   console.log(`Server run on port ${PORT}`);
 });

@@ -1,5 +1,5 @@
 //import model
-const typeModel = require("../models/index").customer;
+const typeModel = require("../models/index").tipe_kamar;
 
 const Op = require(`sequelize`).Op;
 const bcrypt = require(`bcrypt`);
@@ -14,7 +14,7 @@ exports.getAllType = async (req, res) => {
     return res.status(200).json({
       success: true,
       data: dataType,
-      message: "All Customer have been loaded",
+      message: "All room type have been loaded",
     });
   } catch (error) {
     console.error("Error in getAllType: ", error);
@@ -22,6 +22,21 @@ exports.getAllType = async (req, res) => {
       success: false,
       data: null,
       message: "Room Type is empty",
+    });
+  }
+};
+
+exports.getTypeById = async (req, res) => {
+  let idCust = req.params.id;
+
+  try {
+    let dataCust = await customerModel.findOne({ where: { id: idCust } });
+
+    return res.status(200).json(dataCust);
+  } catch (error) {
+    return res.status(404).json({
+      success: false,
+      message: "Member Not Found",
     });
   }
 };
@@ -73,41 +88,34 @@ exports.addType = async (req, res) => {
 };
 
 exports.updateCust = async (req, res) => {
-  upload(req, res, async (error) => {
+  uploadRoomType.single("foto")(req, res, async (error) => {
     if (error) {
       return res.status(500).json({ message: error });
     }
-    const existingCust = await typeModel.findOne({
-      where: { username: req.body.username },
-    });
 
-    if (existingCust) {
-      return res.status(400).json({ message: "Username already in use" });
-    }
-
-    let idCust = req.params.id;
-    let dataCust = {
-      nama_customer: req.body.nama_customer,
-      username: req.body.username,
-      password: req.body.password,
+    let idType = req.params.id;
+    let dataType = {
+      nama_tipe_kamar : req.body.nama_tipe_kamar,
+      harga : req.body.harga,
+      deskripsi : req.body.deskripsi
     };
     if (req.file) {
-      const selectedCust = await typeModel.findOne({
-        where: { id: idCust },
+      const selectedType = await typeModel.findOne({
+        where: { id: idType },
       });
 
-      const oldFoto = selectedCust.foto;
+      const oldFoto = selectedType.foto;
 
-      const pathFoto = path.join(__dirname, `../images/customer`, oldFoto);
+      const pathFoto = path.join(__dirname, `../images/roomtype`, oldFoto);
 
       if (fs.existsSync(pathFoto)) {
         fs.unlink(pathFoto, (error) => console.log(error));
       }
-      dataCust.foto = req.file.filename;
+      dataType.foto = req.file.filename;
     }
 
     typeModel
-      .update(dataCust, { where: { id: idCust } })
+      .update(dataType, { where: { id: idType } })
       .then((result) => {
         res.json({
           result: result,
@@ -123,17 +131,17 @@ exports.updateCust = async (req, res) => {
 };
 
 exports.deleteCust = async (req, res) => {
-  let idCust = req.params.id;
-  const customer = await typeModel.findOne({ where: { id: idCust } });
-  const oldFoto = customer.foto;
-  const pathFoto = path.join(__dirname, "../images/customer", oldFoto);
+  let idType = req.params.id;
+  const Type = await typeModel.findOne({ where: { id: idType } });
+  const oldFoto = Type.foto;
+  const pathFoto = path.join(__dirname, "../images/roomtype", oldFoto);
 
   if (fs.existsSync(pathFoto)) {
     fs.unlink(pathFoto, (error) => console.log(error));
   }
 
   typeModel
-    .destroy({ where: { id: idCust } })
+    .destroy({ where: { id: idType } })
     .then((result) => {
       return res.json({
         success: true,
