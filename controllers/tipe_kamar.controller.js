@@ -2,7 +2,6 @@
 const typeModel = require("../models/index").tipe_kamar;
 
 const Op = require(`sequelize`).Op;
-const bcrypt = require(`bcrypt`);
 const { uploadRoomType } = require(`./upload-foto.controller`);
 const fs = require("fs");
 const path = require("path");
@@ -27,17 +26,19 @@ exports.getAllType = async (req, res) => {
 };
 
 exports.getTypeById = async (req, res) => {
-  let idCust = req.params.id;
+  let idType = req.params.id;
 
   try {
-    let dataCust = await customerModel.findOne({ where: { id: idCust } });
+    const dataType = await typeModel.findOne({where: {id:idType}});
 
-    return res.status(200).json(dataCust);
+    if(!dataType){
+      return res.status(404).json({ message: 'Room Type Not Found' });
+    }
+
+    return res.status(200).json(dataType);
   } catch (error) {
-    return res.status(404).json({
-      success: false,
-      message: "Member Not Found",
-    });
+    console.error(error)
+    return res.status(500).json({message : "There is trouble in server"});
   }
 };
 
@@ -96,7 +97,7 @@ exports.addType = async (req, res) => {
   });
 };
 
-exports.updateCust = async (req, res) => {
+exports.updateType = async (req, res) => {
   uploadRoomType.single("foto")(req, res, async (error) => {
     if (error) {
       return res.status(500).json({ message: error });
@@ -139,7 +140,7 @@ exports.updateCust = async (req, res) => {
   });
 };
 
-exports.deleteCust = async (req, res) => {
+exports.deleteType = async (req, res) => {
   let idType = req.params.id;
   const Type = await typeModel.findOne({ where: { id: idType } });
   const oldFoto = Type.foto;
