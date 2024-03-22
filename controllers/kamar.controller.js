@@ -1,60 +1,63 @@
 //import model
-const kamarModel = require("../models/index").kamar;
+const roomModel = require("../models/index").kamar;
 
 const Op = require(`sequelize`).Op;
-const bcrypt = require(`bcrypt`);
-const upload = require("./upload-foto-customer.controller").single("foto");
-const fs = require("fs");
-const path = require("path");
 
-exports.getAllKamar = async (req, res) => {
+exports.getAllRoom = async (req, res) => {
   try {
-    let dataCust = await kamarModel.findAll();
+    const roomData = await roomModel.findAll();
 
     return res.status(200).json({
       success: true,
-      data: dataCust,
-      message: "All Customer have been loaded",
+      data: roomData,
+      message: "All data have been loaded",
     });
   } catch (error) {
-    console.error("Error in getAllCustomer: ", error);
-    return res.status(500).json({
+    return res.json({
       success: false,
-      data: null,
-      message: "Data Customer is empty",
+      message: error,
     });
   }
 };
 
-exports.getCustById = async (req, res) => {
-  let idCust = req.params.id;
+exports.getRoomById = async (req, res) => {
+  let idRoom = req.params.id;
 
   try {
-    let dataCust = await kamarModel.findOne({ where: { id: idCust } });
+    const roomData = await roomModel.findOne({
+      where: { id: idRoom },
+    });
 
-    return res.status(200).json(dataCust);
+    if (!roomData) {
+      return res.status(404).json({
+        message: "Room Not Found",
+      });
+    }
+
+    return res.status(200).json(roomData);
   } catch (error) {
-    return res.status(404).json({
-      success: false,
-      message: "Member Not Found",
+    return res.status(500).json({
+      message: "There is trouble in server",
+      error: error,
     });
   }
 };
 
-exports.findCust = async (req, res) => {
+exports.findType = async (req, res) => {
   let keyword = req.body.keyword;
 
   try {
-    let dataCust = await kamarModel.findAll({
+    let roomData = await typeModel.findAll({
       where: {
         [Op.or]: [
-          { nama_customer: { [Op.substring]: keyword } },
-          { username: { [Op.substring]: keyword } },
+          { nama_kamar: { [Op.substring]: keyword } },
+          { harga: { [Op.substring]: keyword } },
+          { deskripsi: { [Op.substring]: keyword } },
         ],
       },
     });
 
-    return res.status(200).json(dataCust);
+    return res.status(200).json(roomData);
   } catch (error) {
     return res.status(404).json({
       success: false,
@@ -63,81 +66,45 @@ exports.findCust = async (req, res) => {
   }
 };
 
-exports.addCust = async (req, res) => {
-  upload(req, res, async (error) => {
-    if (error) {
-      return res.status(500).json({ message: error });
-    }
+exports.addRoom = async (req, res) => {
+  try {
+    const { nomor_kamar, id_tipe_kamar } = req.body;
 
-    const existingCust = await kamarModel.findOne({
-      where: { username: req.body.username },
-    });
-
-    if (existingCust) {
-      return res.status(400).json({ message: "Username already in use" });
-    }
-    if (!req.file) {
-      return res.json({ message: "No uploaded file" });
-    }
-
-    let newCust = {
-      nama_customer: req.body.nama_customer,
-      username: req.body.username,
-      password: bcrypt.hashSync(req.body.password, 10),
-      foto: req.file.filename,
-    };
-
-    kamarModel
-      .create(newCust)
-      .then((result) => {
-        return res.json({
-          success: true,
-          data: result,
-          message: "New Customer has been inserted",
-        });
-      })
-      .catch((error) => {
-        return res.status(500).json({ message: "Failed to add customer" });
-      });
-  });
+    const idType = await roomModel.findOne({
+      include : id_tipe_kamar
+        })
+  } catch (error) {}
 };
 
-exports.updateCust = async (req, res) => {
-  upload(req, res, async (error) => {
+exports.updateType = async (req, res) => {
+  uploadRoomType.single("foto")(req, res, async (error) => {
     if (error) {
       return res.status(500).json({ message: error });
     }
-    const existingCust = await kamarModel.findOne({
-      where: { username: req.body.username },
-    });
 
-    if (existingCust) {
-      return res.status(400).json({ message: "Username already in use" });
-    }
-    
-    let idCust = req.params.id;
-    let dataCust = {
-      nama_customer: req.body.nama_customer,
-      username: req.body.username,
-      password: req.body.password,
+    let idType = req.params.id;
+    let roomData = {
+      nama_kamar: req.body.nama_kamar,
+      harga: req.body.harga,
+      deskripsi: req.body.deskripsi,
     };
     if (req.file) {
-      const selectedCust = await kamarModel.findOne({
-        where: { id: idCust },
+      const selectedType = await typeModel.findOne({
+        where: { id: idType },
       });
 
-      const oldFoto = selectedCust.foto;
+      const oldFoto = selectedType.foto;
 
-      const pathFoto = path.join(__dirname, `../images/customer`, oldFoto);
+      const pathFoto = path.join(__dirname, `../images/roomtype`, oldFoto);
 
       if (fs.existsSync(pathFoto)) {
         fs.unlink(pathFoto, (error) => console.log(error));
       }
-      dataCust.foto = req.file.filename;
+      roomData.foto = req.file.filename;
     }
 
-    kamarModel
-      .update(dataCust, { where: { id: idCust } })
+    typeModel
+      .update(roomData, { where: { id: idType } })
       .then((result) => {
         res.json({
           result: result,
@@ -152,18 +119,18 @@ exports.updateCust = async (req, res) => {
   });
 };
 
-exports.deleteCust = async (req, res) => {
-  let idCust = req.params.id;
-  const customer = await kamarModel.findOne({ where: { id: idCust } });
-  const oldFoto = customer.foto;
-  const pathFoto = path.join(__dirname, "../images/customer", oldFoto);
+exports.deleteType = async (req, res) => {
+  let idType = req.params.id;
+  const Type = await typeModel.findOne({ where: { id: idType } });
+  const oldFoto = Type.foto;
+  const pathFoto = path.join(__dirname, "../images/roomtype", oldFoto);
 
   if (fs.existsSync(pathFoto)) {
     fs.unlink(pathFoto, (error) => console.log(error));
   }
 
-  kamarModel
-    .destroy({ where: { id: idCust } })
+  typeModel
+    .destroy({ where: { id: idType } })
     .then((result) => {
       return res.json({
         success: true,
