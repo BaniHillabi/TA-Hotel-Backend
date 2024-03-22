@@ -3,7 +3,7 @@ const typeModel = require("../models/index").tipe_kamar;
 
 const Op = require(`sequelize`).Op;
 const bcrypt = require(`bcrypt`);
-const {uploadRoomType} = require(`./upload-foto.controller`)
+const { uploadRoomType } = require(`./upload-foto.controller`);
 const fs = require("fs");
 const path = require("path");
 
@@ -42,15 +42,24 @@ exports.getTypeById = async (req, res) => {
 };
 
 exports.findType = async (req, res) => {
+  let keyword = req.body.keyword;
+
   try {
-    let idType = req.params.id;
-    let dataType = await typeModel.findOne({ where: { id: idType } });
+    let dataType = await typeModel.findAll({
+      where: {
+        [Op.or]: [
+          { nama_tipe_kamar: { [Op.substring]: keyword } },
+          { harga: { [Op.substring]: keyword } },
+          { deskripsi: { [Op.substring]: keyword } },
+        ],
+      },
+    });
 
     return res.status(200).json(dataType);
   } catch (error) {
     return res.status(404).json({
       success: false,
-      message: "Type Not Found",
+      message: "Member Not Found",
     });
   }
 };
@@ -66,10 +75,10 @@ exports.addType = async (req, res) => {
     }
 
     let dataType = {
-        nama_tipe_kamar : req.body.nama_tipe_kamar,
-        harga : req.body.harga,
-        deskripsi : req.body.deskripsi,
-        foto : req.file.filename  
+      nama_tipe_kamar: req.body.nama_tipe_kamar,
+      harga: req.body.harga,
+      deskripsi: req.body.deskripsi,
+      foto: req.file.filename,
     };
 
     typeModel
@@ -95,9 +104,9 @@ exports.updateCust = async (req, res) => {
 
     let idType = req.params.id;
     let dataType = {
-      nama_tipe_kamar : req.body.nama_tipe_kamar,
-      harga : req.body.harga,
-      deskripsi : req.body.deskripsi
+      nama_tipe_kamar: req.body.nama_tipe_kamar,
+      harga: req.body.harga,
+      deskripsi: req.body.deskripsi,
     };
     if (req.file) {
       const selectedType = await typeModel.findOne({
