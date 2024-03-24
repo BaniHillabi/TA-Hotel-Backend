@@ -68,12 +68,26 @@ exports.findType = async (req, res) => {
 
 exports.addRoom = async (req, res) => {
   try {
-    const { nomor_kamar, id_tipe_kamar } = req.body;
+    const roomData = {
+      nomor_kamar : req.body.nomor_kamar,
+      id_tipe_kamar : req.body.id_tipe_kamar
+    }
 
-    const idType = await roomModel.findOne({
-      include : id_tipe_kamar
-        })
-  } catch (error) {}
+    roomModel
+    .create(roomData)
+    .then((result) => {
+      return res.status(200).json({
+        success : true,
+        data : result,
+        message : "New room has been inserted"
+      })
+    })
+  } catch (error) {
+    return res.status(404).json({
+      success : false,
+      message : error,
+    })
+  }
 };
 
 exports.updateType = async (req, res) => {
