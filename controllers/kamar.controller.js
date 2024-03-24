@@ -43,16 +43,15 @@ exports.getRoomById = async (req, res) => {
   }
 };
 
-exports.findType = async (req, res) => {
+exports.findRoom = async (req, res) => {
   let keyword = req.body.keyword;
 
   try {
-    let roomData = await typeModel.findAll({
+    let roomData = await roomModel.findAll({
       where: {
         [Op.or]: [
-          { nama_kamar: { [Op.substring]: keyword } },
-          { harga: { [Op.substring]: keyword } },
-          { deskripsi: { [Op.substring]: keyword } },
+          { nomor_kamar: { [Op.substring]: keyword } },
+          { id_tipe_kamar: { [Op.substring]: keyword } },
         ],
       },
     });
@@ -61,7 +60,7 @@ exports.findType = async (req, res) => {
   } catch (error) {
     return res.status(404).json({
       success: false,
-      message: "Member Not Found",
+      message: "Room Not Found",
     });
   }
 };
@@ -69,82 +68,53 @@ exports.findType = async (req, res) => {
 exports.addRoom = async (req, res) => {
   try {
     const roomData = {
-      nomor_kamar : req.body.nomor_kamar,
-      id_tipe_kamar : req.body.id_tipe_kamar
-    }
+      nomor_kamar: req.body.nomor_kamar,
+      id_tipe_kamar: req.body.id_tipe_kamar,
+    };
 
-    roomModel
-    .create(roomData)
-    .then((result) => {
+    roomModel.create(roomData).then((result) => {
       return res.status(200).json({
-        success : true,
-        data : result,
-        message : "New room has been inserted"
-      })
-    })
+        success: true,
+        data: result,
+        message: "New room has been inserted",
+      });
+    });
   } catch (error) {
     return res.status(404).json({
-      success : false,
-      message : error,
+      success: false,
+      message: error,
+    });
+  }
+};
+
+exports.updateRoom = async (req, res) => {
+  let idRoom = req.params.id;
+  let roomData = {
+    nomor_kamar : req.body.nomor_kamar,
+    id_tipe_kamar: req.body.id_tipe_kamar
+  };
+
+  roomModel
+    .update(roomData, { where: { id: idRoom } })
+    .then((result) => {
+      res.status(200).json({
+        result: result,
+        message: "data has been updated",
+      });
     })
-  }
+    .catch((error) => {
+      res.status(500).json({
+        message : "nothing updated",
+        error: error,
+      });
+    });
 };
 
-exports.updateType = async (req, res) => {
-  uploadRoomType.single("foto")(req, res, async (error) => {
-    if (error) {
-      return res.status(500).json({ message: error });
-    }
-
-    let idType = req.params.id;
-    let roomData = {
-      nama_kamar: req.body.nama_kamar,
-      harga: req.body.harga,
-      deskripsi: req.body.deskripsi,
-    };
-    if (req.file) {
-      const selectedType = await typeModel.findOne({
-        where: { id: idType },
-      });
-
-      const oldFoto = selectedType.foto;
-
-      const pathFoto = path.join(__dirname, `../images/roomtype`, oldFoto);
-
-      if (fs.existsSync(pathFoto)) {
-        fs.unlink(pathFoto, (error) => console.log(error));
-      }
-      roomData.foto = req.file.filename;
-    }
-
-    typeModel
-      .update(roomData, { where: { id: idType } })
-      .then((result) => {
-        res.json({
-          result: result,
-          message: "data has been updated",
-        });
-      })
-      .catch((error) => {
-        res.json({
-          message: error.message,
-        });
-      });
-  });
-};
-
-exports.deleteType = async (req, res) => {
-  let idType = req.params.id;
-  const Type = await typeModel.findOne({ where: { id: idType } });
-  const oldFoto = Type.foto;
-  const pathFoto = path.join(__dirname, "../images/roomtype", oldFoto);
-
-  if (fs.existsSync(pathFoto)) {
-    fs.unlink(pathFoto, (error) => console.log(error));
-  }
-
-  typeModel
-    .destroy({ where: { id: idType } })
+exports.deleteRoom = async (req, res) => {
+  let idRoom = req.params.id;
+  
+  roomModel
+    .destroy({ where: { id: idRoom } })
     .then((result) => {
       return res.json({
         success: true,
