@@ -7,6 +7,12 @@ exports.getAllRoom = async (req, res) => {
   try {
     const roomData = await roomModel.findAll();
 
+    if (roomData == 0){
+      return res.status(404).json({
+        success: true,
+        message : "empty data"
+      })
+    }
     return res.status(200).json({
       success: true,
       data: roomData,
